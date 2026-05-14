@@ -1175,7 +1175,7 @@ GameObject:
   - component: {fileID: 426826077}
   - component: {fileID: 426826078}
   m_Layer: 0
-  m_Name: Mario_Small_Idle
+  m_Name: PlayerSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
