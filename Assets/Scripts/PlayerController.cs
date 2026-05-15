@@ -5,42 +5,70 @@ using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
-    private InputSystem_Actions actions;
-    private InputAction moveAction;
-    private InputAction jumpAction;
+    
 
+    private bool Jumped = false;
     private bool isGrounded = false;
     
-    private Rigidbody2D rb;
     private Vector2 moveDirection;
 
     [Header("Visual Components")] 
     [SerializeField] private SpriteRenderer spriteRenderer;
 
     [Header("Movement Variables")] 
-    [SerializeField] private float startingSpeed;
-    [SerializeField]private float maxSpeed = 10f;
-    [SerializeField]private float moveSpeed;
-    [SerializeField] private float jumpStrength;
-    private float pastSpeed;
-    
-    [Header("Debug I Guess")]
-    [SerializeField]private ContactPoint2D[] contactPoints;
+    [SerializeField]private float maxSpeed = 5f;
+    [SerializeField]private float groundAcceleration;
+    [SerializeField]private float groundDeceleration;
+    [SerializeField]private float airAcceleration;
+    [SerializeField]private float airDeceleration;
+    [SerializeField] private float stopThreshold = 0.05f;
 
+    [Header("Jump Variables")]
+    [SerializeField]private float jumpSpeed;
+    [SerializeField]private float jumpCutFactor;
+    [SerializeField]private float minimumJump;
+
+    [Header("Tuning")] 
+    [SerializeField] private float CoyoteTime;
+    [SerializeField] private float jumpBufferTime;
+    
+    [Header("Gravity")]
+    [SerializeField]private float fallGravityMultiplier;
+    [SerializeField]private float lowJumpGravityMultiplier;
+    [SerializeField]private float apexGravityMultiplier;
+    [SerializeField]private float maxFallSpeed;
+    
+    [Header("GroundCheck")]
+    [SerializeField]private Transform groundCheck;
+    [SerializeField]private float groundCheckRadius;
+    
+    [Header("Properties")]
+    private Rigidbody2D rb;
+    private InputSystem_Actions actions;
+    private InputAction moveAction;
+    private InputAction jumpAction;
+    
     private void Awake()
     {
         actions = new InputSystem_Actions();
         rb = GetComponent<Rigidbody2D>();
-        actions.Player.Jump.started += OnJump; 
     }
 
     private void OnEnable()
     {
+        //Prendemos controles
         actions.Enable();
+        //Suscribimos acciones de Salto
+        actions.Player.Jump.started += OnJumpStarted; 
+        actions.Player.Jump.started += OnJumpCanceled; 
     }
 
     private void OnDisable()
     {
+        //Desuscribimos acciones de salto
+        actions.Player.Jump.started -= OnJumpStarted; 
+        actions.Player.Jump.started -= OnJumpCanceled; 
+        //Apagamos controles
         actions.Disable();
     }
 
@@ -54,7 +82,6 @@ public class PlayerController : MonoBehaviour
 
     void FixedUpdate()
     {
-        pastSpeed = rb.linearVelocityX;
         ManageMovement();
     }
     
@@ -66,20 +93,19 @@ public class PlayerController : MonoBehaviour
 
     void ManageMovement()
     {
-        
        
         
     }
 
-    void OnJump(InputAction.CallbackContext context)
+    void OnJumpStarted(InputAction.CallbackContext context)
     {
-        if (isGrounded)
-        {
-            rb.AddForce(Vector2.up*jumpStrength, ForceMode2D.Impulse);
-            isGrounded = false;
-        }
+       
     }
 
+    void OnJumpCanceled(InputAction.CallbackContext context)
+    {
+        
+    }
     void ManageVisualAspect()
     {
         if (moveDirection.x < 0)
@@ -94,8 +120,6 @@ public class PlayerController : MonoBehaviour
     private void OnCollisionStay2D(Collision2D other)
     {
         isGrounded = true;
-        contactPoints = new ContactPoint2D[other.contactCount];
-        other.GetContacts(contactPoints);
     }
     
 }
