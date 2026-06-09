@@ -1,125 +1,70 @@
-using System;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 
-public class PlayerController : MonoBehaviour
+
+
+public class PlayerMovement : MonoBehaviour
 {
-    
+    [Header("Variables Movimiento")]
+    public float moveSpeed = 5f;
+    public float jumpForce = 2f;
+    public Transform groundCheck;
+    public LayerMask groundLayer;
 
-    private bool Jumped = false;
-    private bool isGrounded = false;
-    
-    private Vector2 moveDirection;
-
-    [Header("Visual Components")] 
+    [Header("Sprite")]
     [SerializeField] private SpriteRenderer spriteRenderer;
 
-    [Header("Movement Variables")] 
-    [SerializeField]private float maxSpeed = 5f;
-    [SerializeField]private float groundAcceleration;
-    [SerializeField]private float groundDeceleration;
-    [SerializeField]private float airAcceleration;
-    [SerializeField]private float airDeceleration;
-    [SerializeField] private float stopThreshold = 0.05f;
-
-    [Header("Jump Variables")]
-    [SerializeField]private float jumpSpeed;
-    [SerializeField]private float jumpCutFactor;
-    [SerializeField]private float minimumJump;
-
-    [Header("Tuning")] 
-    [SerializeField] private float CoyoteTime;
-    [SerializeField] private float jumpBufferTime;
-    
-    [Header("Gravity")]
-    [SerializeField]private float fallGravityMultiplier;
-    [SerializeField]private float lowJumpGravityMultiplier;
-    [SerializeField]private float apexGravityMultiplier;
-    [SerializeField]private float maxFallSpeed;
-    
-    [Header("GroundCheck")]
-    [SerializeField]private Transform groundCheck;
-    [SerializeField]private float groundCheckRadius;
-    
-    [Header("Properties")]
     private Rigidbody2D rb;
-    private InputSystem_Actions actions;
-    private InputAction moveAction;
-    private InputAction jumpAction;
-    
-    private void Awake()
+    private InputSystem_Actions controls;
+    private float moveInput;
+    private bool isGrounded;
+    private Animator animator;
+
+
+    void Awake()
     {
-        actions = new InputSystem_Actions();
         rb = GetComponent<Rigidbody2D>();
+        controls = new InputSystem_Actions();
+        animator = GetComponentInChildren<Animator>();
     }
 
-    private void OnEnable()
+    void OnEnable()
     {
-        //Prendemos controles
-        actions.Enable();
-        //Suscribimos acciones de Salto
-        actions.Player.Jump.started += OnJumpStarted; 
-        actions.Player.Jump.started += OnJumpCanceled; 
+        controls.Player.Enable();
+        controls.Player.Jump.performed += OnJump;
     }
 
-    private void OnDisable()
+    void OnDisable()
     {
-        //Desuscribimos acciones de salto
-        actions.Player.Jump.started -= OnJumpStarted; 
-        actions.Player.Jump.started -= OnJumpCanceled; 
-        //Apagamos controles
-        actions.Disable();
+        controls.Player.Jump.performed -= OnJump;
+        controls.Player.Disable();
     }
 
-   
-    void Start()
+    void Update()
     {
-        moveAction = actions.FindAction("Move");
+        moveInput = controls.Player.Move.ReadValue<Vector2>().x;
+        animator.SetBool("isRunning", moveInput != 0);
+        if (moveInput < 0) spriteRenderer.flipX = true;
+        else if(moveInput > 0) spriteRenderer.flipX = false;
+        isGrounded = Physics2D.OverlapCircle(groundCheck.position, 0.2f, groundLayer);
     }
-
-    // Update is called once per frame
 
     void FixedUpdate()
     {
-        ManageMovement();
-    }
-    
-    void Update()
-    {
-        ManageVisualAspect();
-        Debug.Log("Is Grounded: "+isGrounded);
+        rb.linearVelocity = new Vector2(moveInput * moveSpeed, rb.linearVelocity.y);
     }
 
-    void ManageMovement()
+    void OnJump(InputAction.CallbackContext ctx)
     {
-       
-        
-    }
-
-    void OnJumpStarted(InputAction.CallbackContext context)
-    {
-       
-    }
-
-    void OnJumpCanceled(InputAction.CallbackContext context)
-    {
-        
-    }
-    void ManageVisualAspect()
-    {
-        if (moveDirection.x < 0)
+        if (isGrounded) 
         {
-            spriteRenderer.flipX = true;
-        }else if (moveDirection.x > 0)
-        {
-            spriteRenderer.flipX = false;
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, jumpForce);
         }
     }
 
-    private void OnCollisionStay2D(Collision2D other)
+    public void Die()
     {
-        isGrounded = true;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
-    
 }
