@@ -7,6 +7,7 @@ public class TurtleEnemy : MonoBehaviour
     public float shellSpeed = 8f;
     public Transform wallCheck;
     public LayerMask wallLayer;
+    public LayerMask Enemies;
 
     [Header("Sprites")]
     [SerializeField] private Sprite shellSprite;
@@ -29,8 +30,7 @@ public class TurtleEnemy : MonoBehaviour
     {
         rb.linearVelocity = new Vector2(direction * currentSpeed, rb.linearVelocity.y);
 
-        if (currentSpeed > 0 && Physics2D.OverlapCircle(wallCheck.position, 0.1f, wallLayer))
-            SetDirection(-direction);
+        if (currentSpeed > 0 && Physics2D.OverlapCircle(wallCheck.position, 0.1f, wallLayer)) SetDirection(-direction);
     }
 
     void SetDirection(int dir)
@@ -41,41 +41,46 @@ public class TurtleEnemy : MonoBehaviour
 
     void OnCollisionEnter2D(Collision2D col)
     {
-        if (!col.gameObject.CompareTag("Player")) return;
-
-        bool fromAbove = col.transform.position.y > transform.position.y + 0.3f;
-
-        if (!isShell)
+        if (col.gameObject.CompareTag("Player"))
         {
-            if (fromAbove)
+            bool fromAbove = col.transform.position.y > transform.position.y + 0.3f;
+
+            if (!isShell)
             {
-                isShell = true;
-                currentSpeed = 0;
-                spriteRenderer.sprite = shellSprite;
+                if (fromAbove)
+                {
+                    isShell = true;
+                    currentSpeed = 0;
+                    spriteRenderer.sprite = shellSprite;
+                }
+                else
+                {
+                    col.gameObject.GetComponent<PlayerMovement>().Die();
+                }
             }
             else
             {
-                col.gameObject.GetComponent<PlayerMovement>().Die();
+                if (currentSpeed == 0)
+                {
+                    if (col.transform.position.x < transform.position.x)
+                        SetDirection(1);
+                    else
+                        SetDirection(-1);
+                    currentSpeed = shellSpeed;
+                }
+                else if (fromAbove)
+                {
+                    currentSpeed = 0;
+                }
+                else
+                {
+                    col.gameObject.GetComponent<PlayerMovement>().Die();
+                }
             }
         }
-        else
+        else if (col.gameObject.CompareTag("Enemy") && isShell && currentSpeed > 0)
         {
-            if (currentSpeed == 0)
-            {
-                if (col.transform.position.x < transform.position.x) 
-                {
-                    SetDirection(1);
-
-                }else
-                {
-                    SetDirection(-1);
-                }
-                currentSpeed = shellSpeed;
-            }
-            else
-            {
-                currentSpeed = 0;
-            }
+            Destroy(col.gameObject);
         }
     }
 }

@@ -9,6 +9,7 @@ public class PlayerMovement : MonoBehaviour
     [Header("Variables Movimiento")]
     public float moveSpeed = 5f;
     public float jumpForce = 2f;
+    public float bounceForce = 7f;
     public Transform groundCheck;
     public LayerMask groundLayer;
 
@@ -44,7 +45,7 @@ public class PlayerMovement : MonoBehaviour
     void Update()
     {
         moveInput = controls.Player.Move.ReadValue<Vector2>().x;
-        animator.SetBool("isRunning", moveInput != 0);
+        animator.SetBool("isMoving", moveInput != 0);
         if (moveInput < 0) spriteRenderer.flipX = true;
         else if(moveInput > 0) spriteRenderer.flipX = false;
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, 0.2f, groundLayer);
@@ -65,6 +66,14 @@ public class PlayerMovement : MonoBehaviour
 
     public void Die()
     {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        FindAnyObjectByType<GameOverMenu>().ShowGameOver();
+    }
+
+    void OnCollisionEnter2D(Collision2D col)
+    {
+        if (col.gameObject.CompareTag("Enemy") && transform.position.y > col.transform.position.y + 0.3f)
+        {
+            rb.linearVelocity = new Vector2(rb.linearVelocity.x, bounceForce);
+        }
     }
 }

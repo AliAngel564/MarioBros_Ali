@@ -6,6 +6,7 @@ public class GoombaEnemy : MonoBehaviour
     public float moveSpeed = 2f;
     public Transform wallCheck;
     public LayerMask wallLayer;
+    public LayerMask Enemies;
 
     private Rigidbody2D rb;
     private int direction = -1;
@@ -19,7 +20,7 @@ public class GoombaEnemy : MonoBehaviour
     {
         rb.linearVelocity = new Vector2(direction * moveSpeed, rb.linearVelocity.y);
 
-        if (Physics2D.OverlapCircle(wallCheck.position, 0.1f, wallLayer))Flip();
+        if (Physics2D.OverlapCircle(wallCheck.position, 0.1f, wallLayer)) Flip();
     }
 
     void Flip()
